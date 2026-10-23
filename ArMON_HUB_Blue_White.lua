@@ -380,7 +380,7 @@ local A =
 local _armonLogoAsset = "rbxassetid://87840957911768"
 Main = guardUI(A.CreateMain({
     Title = "ArMON HUB",
-    Desc = " - ArMON HUB",
+    Desc = "",
     Logo = _armonLogoAsset,
     Icon = _armonLogoAsset,
 }), "Main")
@@ -389,11 +389,11 @@ Main = guardUI(A.CreateMain({
 -- CreateMain; it does not alter farming, teleport, settings, or other logic.
 do
     local _armonBlue = Color3.fromRGB(37, 132, 235)
-    local _armonBlueLight = Color3.fromRGB(221, 239, 255)
-    local _armonSurface = Color3.fromRGB(247, 251, 255)
+    local _armonBlueLight = Color3.fromRGB(75, 155, 235)
+    local _armonSurface = Color3.fromRGB(205, 230, 255)
     local _armonWhite = Color3.fromRGB(255, 255, 255)
-    local _armonText = Color3.fromRGB(27, 51, 82)
-    local _armonBorder = Color3.fromRGB(174, 211, 246)
+    local _armonText = _armonWhite
+    local _armonBorder = Color3.fromRGB(130, 195, 255)
 
     local function _armonContainers()
         local list, seen = {}, {}
@@ -425,7 +425,9 @@ do
         if not obj or not obj.Parent then return end
         local name = string.lower(obj.Name or "")
         if (obj:IsA("ImageLabel") or obj:IsA("ImageButton"))
-            and (string.find(name, "logo", 1, true) or string.find(name, "brand", 1, true)) then
+            and (string.find(name, "logo", 1, true) or string.find(name, "brand", 1, true)
+                or string.find(name, "toggle", 1, true) or string.find(name, "open", 1, true)
+                or string.find(name, "icon", 1, true)) then
             obj.Image = _armonLogoAsset
         end
 
@@ -451,19 +453,9 @@ do
             end
         end
 
-        if obj:IsA("TextLabel") or obj:IsA("TextBox") then
-            local tc = obj.TextColor3
-            if _armonIsYellow(tc) then
-                obj.TextColor3 = _armonBlue
-            elseif _armonBrightness(tc) > 0.82 then
-                local parent = obj.Parent
-                if parent and (parent:IsA("TextButton") or parent:IsA("ImageButton"))
-                    and _armonBrightness(parent.BackgroundColor3) < 0.72 then
-                    obj.TextColor3 = _armonWhite
-                else
-                    obj.TextColor3 = _armonText
-                end
-            end
+        -- Requested high-contrast text: pure white throughout the script UI.
+        if obj:IsA("TextLabel") or obj:IsA("TextBox") or obj:IsA("TextButton") then
+            obj.TextColor3 = _armonWhite
         end
 
         if obj:IsA("UIStroke") then
@@ -952,7 +944,7 @@ do
 	local lp = Players.LocalPlayer
 	local env = getgenv()
 
-	local UI_KEY = "Show BananaCat Status UI"
+	local UI_KEY = "Show ArMON HUB Status UI"
 	local BLUE = Color3.fromRGB(37, 132, 235)
 	local BG = Color3.fromRGB(247, 251, 255)
 
@@ -1343,7 +1335,7 @@ do
 		return l
 	end
 
-	makeLabel("ArMON HUB Status", BLUE, 20, 1)
+	makeLabel("ArMON HUB", Color3.fromRGB(255, 255, 255), 20, 1)
 	local statusLabel = makeLabel("Status : ...", Color3.fromRGB(27, 51, 82), 18, 2)
 
 	local lastStatus
@@ -21211,11 +21203,20 @@ a.CreateBind({ Title = "Toggle GUI", Key = Enum.KeyCode.LeftControl }, function(
 		getgenv().UIToggled = true
 	end
 	getgenv().UIToggled = not getgenv().UIToggled
-	if game.CoreGui:FindFirstChild("Nousigi Hub GUI") then
-		for T, T in ipairs(game.CoreGui:GetChildren()) do
-			if T.Name == "Nousigi Hub GUI" then
-				T.Enabled = getgenv().UIToggled
+	local roots = { game:GetService("CoreGui") }
+	pcall(function() if gethui then table.insert(roots, gethui()) end end)
+	pcall(function() table.insert(roots, game:GetService("Players").LocalPlayer:FindFirstChildOfClass("PlayerGui")) end)
+	local seen = {}
+	for _, root in ipairs(roots) do
+		if root and not seen[root] then
+			seen[root] = true
+			for _, gui in ipairs(root:GetDescendants()) do
+				if gui:IsA("ScreenGui") and (gui.Name == "Nousigi Hub GUI" or gui.Name == "ArMON HUB") then
+					gui.Enabled = getgenv().UIToggled
+				end
 			end
+			local direct = root:FindFirstChild("Nousigi Hub GUI") or root:FindFirstChild("ArMON HUB")
+			if direct and direct:IsA("ScreenGui") then direct.Enabled = getgenv().UIToggled end
 		end
 	end
 end)
