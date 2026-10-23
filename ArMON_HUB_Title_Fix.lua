@@ -21467,3 +21467,42 @@ do
     end)
 end
 -- ================= End ArMON HUB Theme =================
+
+-- ================= ArMON HUB Toggle Logo Patch =================
+-- Replace the floating GUI toggle logo with the user's Roblox asset ID.
+-- Only targets likely circular/floating image buttons on the left edge.
+task.spawn(function()
+    local Players = game:GetService("Players")
+    local player = Players.LocalPlayer
+    local assetImage = "rbxassetid://87840957911768"
+    local function patchToggleIcons(root)
+        if not root then return end
+        for _, obj in ipairs(root:GetDescendants()) do
+            if obj:IsA("ImageButton") then
+                pcall(function()
+                    local size = obj.AbsoluteSize
+                    local pos = obj.AbsolutePosition
+                    local name = string.lower(obj.Name)
+                    local nameLooksLikeToggle = name:find("toggle", 1, true)
+                        or name:find("icon", 1, true)
+                        or name:find("logo", 1, true)
+                        or name:find("open", 1, true)
+                        or name:find("minimize", 1, true)
+                    local looksLikeFloatingButton = size.X >= 40 and size.X <= 130
+                        and size.Y >= 40 and size.Y <= 130
+                        and pos.X <= 150
+                    if nameLooksLikeToggle or looksLikeFloatingButton then
+                        obj.Image = assetImage
+                        -- Keep the existing button behavior and styling intact.
+                    end
+                end)
+            end
+        end
+    end
+    for _ = 1, 120 do
+        pcall(function() patchToggleIcons(game:GetService("CoreGui")) end)
+        pcall(function() if player then patchToggleIcons(player:FindFirstChildOfClass("PlayerGui")) end end)
+        task.wait(0.5)
+    end
+end)
+-- ================= End ArMON HUB Toggle Logo Patch =================
