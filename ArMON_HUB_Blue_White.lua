@@ -377,158 +377,7 @@ game:GetService("Players").LocalPlayer.Idled:connect(function()
 end)
 local A =
 	loadstring(game:HttpGet("https://raw.githubusercontent.com/obiiyeuem/vthangsitink/refs/heads/main/zzzz.lua"))()
-local _armonLogoAsset = "rbxassetid://87840957911768"
-Main = guardUI(A.CreateMain({
-    Title = "ArMON HUB",
-    Desc = "",
-    Logo = _armonLogoAsset,
-    Icon = _armonLogoAsset,
-}), "Main")
-
--- ArMON HUB visual theme: blue + white. This only styles the GUI created by
--- CreateMain; it does not alter farming, teleport, settings, or other logic.
-do
-    local _armonBlue = Color3.fromRGB(37, 132, 235)
-    local _armonBlueLight = Color3.fromRGB(75, 155, 235)
-    local _armonSurface = Color3.fromRGB(205, 230, 255)
-    local _armonWhite = Color3.fromRGB(255, 255, 255)
-    local _armonText = _armonWhite
-    local _armonBorder = Color3.fromRGB(130, 195, 255)
-
-    local function _armonContainers()
-        local list, seen = {}, {}
-        local function add(obj)
-            if obj and not seen[obj] then
-                seen[obj] = true
-                list[#list + 1] = obj
-            end
-        end
-        pcall(function() if gethui then add(gethui()) end end)
-        pcall(function() add(game:GetService("CoreGui")) end)
-        pcall(function()
-            local lp = game:GetService("Players").LocalPlayer
-            if lp then add(lp:FindFirstChildOfClass("PlayerGui")) end
-        end)
-        return list
-    end
-
-    local function _armonIsYellow(color)
-        return color.R > 0.62 and color.G > 0.38 and color.B < 0.34
-            and color.R > color.G * 0.9
-    end
-
-    local function _armonBrightness(color)
-        return color.R * 0.299 + color.G * 0.587 + color.B * 0.114
-    end
-
-    local function _armonThemeObject(obj)
-        if not obj or not obj.Parent then return end
-        local name = string.lower(obj.Name or "")
-        if (obj:IsA("ImageLabel") or obj:IsA("ImageButton"))
-            and (string.find(name, "logo", 1, true) or string.find(name, "brand", 1, true)
-                or string.find(name, "toggle", 1, true) or string.find(name, "open", 1, true)
-                or string.find(name, "icon", 1, true)) then
-            obj.Image = _armonLogoAsset
-        end
-
-        if obj:IsA("TextButton") or obj:IsA("ImageButton") then
-            if obj:IsA("GuiObject") and obj.BackgroundTransparency < 1 then
-                local bg = obj.BackgroundColor3
-                if _armonIsYellow(bg) then
-                    obj.BackgroundColor3 = _armonBlue
-                    if obj:IsA("TextButton") then obj.TextColor3 = _armonWhite end
-                elseif _armonBrightness(bg) < 0.22 then
-                    obj.BackgroundColor3 = _armonBlueLight
-                    if obj:IsA("TextButton") then obj.TextColor3 = _armonText end
-                end
-            end
-        elseif obj:IsA("Frame") or obj:IsA("ScrollingFrame") or obj:IsA("TextBox") then
-            if obj.BackgroundTransparency < 1 then
-                local bg = obj.BackgroundColor3
-                if _armonIsYellow(bg) then
-                    obj.BackgroundColor3 = _armonBlueLight
-                elseif _armonBrightness(bg) < 0.22 then
-                    obj.BackgroundColor3 = _armonSurface
-                end
-            end
-        end
-
-        -- Requested high-contrast text: pure white throughout the script UI.
-        if obj:IsA("TextLabel") or obj:IsA("TextBox") or obj:IsA("TextButton") then
-            obj.TextColor3 = _armonWhite
-        end
-
-        if obj:IsA("UIStroke") then
-            if _armonIsYellow(obj.Color) then
-                obj.Color = _armonBlue
-            elseif _armonBrightness(obj.Color) < 0.22 then
-                obj.Color = _armonBorder
-            end
-        elseif obj:IsA("UIGradient") then
-            local yellow = false
-            for _, keypoint in ipairs(obj.Color.Keypoints) do
-                if _armonIsYellow(keypoint.Value) then yellow = true; break end
-            end
-            if yellow then
-                obj.Color = ColorSequence.new(_armonBlueLight, _armonBlue)
-            end
-        end
-    end
-
-    local function _armonThemeRoot(root)
-        for _, obj in ipairs(root:GetDescendants()) do
-            _armonThemeObject(obj)
-        end
-        -- Replace the header image next to the ArMON HUB title when the UI
-        -- library exposes its logo as a sibling of the title label.
-        for _, obj in ipairs(root:GetDescendants()) do
-            if obj:IsA("TextLabel") and string.find(obj.Text or "", "ArMON HUB", 1, true) then
-                local parent = obj.Parent
-                if parent then
-                    for _, sibling in ipairs(parent:GetChildren()) do
-                        if sibling ~= obj and (sibling:IsA("ImageLabel") or sibling:IsA("ImageButton")) then
-                            sibling.Image = _armonLogoAsset
-                            break
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    task.spawn(function()
-        local mainGui
-        for _ = 1, 80 do
-            for _, container in ipairs(_armonContainers()) do
-                for _, candidate in ipairs(container:GetDescendants()) do
-                    if candidate:IsA("ScreenGui") then
-                        for _, child in ipairs(candidate:GetDescendants()) do
-                            if child:IsA("TextLabel") and string.find(child.Text or "", "ArMON HUB", 1, true) then
-                                mainGui = candidate
-                                break
-                            end
-                        end
-                    end
-                    if mainGui then break end
-                end
-                if mainGui then break end
-            end
-            if mainGui then break end
-            task.wait(0.25)
-        end
-        if not mainGui then
-            warn("[ArMON HUB] Main GUI was not found for theme styling.")
-            return
-        end
-        mainGui.DescendantAdded:Connect(function(obj)
-            task.defer(function() pcall(_armonThemeObject, obj) end)
-        end)
-        while mainGui.Parent do
-            pcall(_armonThemeRoot, mainGui)
-            task.wait(1)
-        end
-    end)
-end
+Main = guardUI(A.CreateMain({ Title = "ArMON HUB", Desc = "Blue & White Edition" }), "Main")
 PageShop = Main.CreatePage({ Page_Name = "Shop", Page_Title = "Shop" })
 getgenv().Options = A.Options
 SectionShopMisc = PageShop.CreateSection("Misc Shop")
@@ -938,15 +787,15 @@ SectionShopAbilities.CreateButton({ Title = "Soru [ $100,000 Beli ]" }, function
 	game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("BuyHaki", "Soru")
 end)
 PageStatusAndServer = Main.CreatePage({ Page_Name = "Status And Server", Page_Title = "Status And Server" })
--- ===================== BananaCat Status UI (v4) =====================
+-- ===================== ArMON HUB Status UI (v4) =====================
 do
 	local Players = game:GetService("Players")
 	local lp = Players.LocalPlayer
 	local env = getgenv()
 
-	local UI_KEY = "Show ArMON HUB Status UI"
-	local BLUE = Color3.fromRGB(37, 132, 235)
-	local BG = Color3.fromRGB(247, 251, 255)
+	local UI_KEY = "Show BananaCat Status UI"
+	local BLUE = Color3.fromRGB(25, 155, 245)
+	local BG = Color3.fromRGB(246, 251, 255)
 
 	-- 1) Chuỗi ưu tiên (mỗi lúc chỉ 1 cái chạy, chiếm StackFarm = false)
 	local CHAIN = {
@@ -1335,8 +1184,8 @@ do
 		return l
 	end
 
-	makeLabel("ArMON HUB", Color3.fromRGB(255, 255, 255), 20, 1)
-	local statusLabel = makeLabel("Status : ...", Color3.fromRGB(27, 51, 82), 18, 2)
+	makeLabel("ArMON HUB Status", BLUE, 20, 1)
+	local statusLabel = makeLabel("Status : ...", Color3.fromRGB(19, 48, 76), 18, 2)
 
 	local lastStatus
 	local function refresh()
@@ -1369,7 +1218,7 @@ do
 		gui.Enabled = v
 	end)
 end
--- ===================== end BananaCat Status UI =====================
+-- ===================== end ArMON HUB Status UI =====================
 SectionStatus = PageStatusAndServer.CreateSection("Status")
 TimerLabel = SectionStatus.CreateLabel({ Title = "Timer" })
 TimerServerLabel = SectionStatus.CreateLabel({ Title = "Timer Server" })
@@ -1408,22 +1257,22 @@ SectionServer.CreateButton({ Title = "Open Gui Server Browser (Low Player and Pi
 			RATE_COOLDOWN = 30,
 		},
 		{
-			BG = Color3.fromRGB(240, 247, 255),
-			SURFACE = Color3.fromRGB(255, 255, 255),
-			ROW = Color3.fromRGB(247, 251, 255),
-			ROW_HOVER = Color3.fromRGB(226, 241, 255),
-			ROW_TOP = Color3.fromRGB(214, 235, 255),
-			BORDER = Color3.fromRGB(185, 215, 242),
-			BORDER_HOV = Color3.fromRGB(65, 145, 230),
-			CYAN = Color3.fromRGB(27, 128, 230),
-			CYAN_DIM = Color3.fromRGB(130, 185, 235),
-			GREEN = Color3.fromRGB(0, 204, 102),
-			GREEN_GLOW = Color3.fromRGB(0, 255, 136),
-			AMBER = Color3.fromRGB(37, 132, 235),
-			RED = Color3.fromRGB(255, 68, 85),
-			TEXT_PRI = Color3.fromRGB(25, 48, 78),
-			TEXT_SEC = Color3.fromRGB(62, 92, 128),
-			TEXT_DIM = Color3.fromRGB(91, 119, 151),
+			BG = Color3.fromRGB(226, 243, 255),
+			SURFACE = Color3.fromRGB(250, 253, 255),
+			ROW = Color3.fromRGB(240, 249, 255),
+			ROW_HOVER = Color3.fromRGB(220, 241, 255),
+			ROW_TOP = Color3.fromRGB(205, 234, 255),
+			BORDER = Color3.fromRGB(151, 211, 247),
+			BORDER_HOV = Color3.fromRGB(24, 145, 220),
+			CYAN = Color3.fromRGB(0, 137, 220),
+			CYAN_DIM = Color3.fromRGB(75, 166, 218),
+			GREEN = Color3.fromRGB(0, 137, 220),
+			GREEN_GLOW = Color3.fromRGB(42, 174, 245),
+			AMBER = Color3.fromRGB(0, 117, 198),
+			RED = Color3.fromRGB(30, 105, 165),
+			TEXT_PRI = Color3.fromRGB(18, 48, 76),
+			TEXT_SEC = Color3.fromRGB(57, 92, 125),
+			TEXT_DIM = Color3.fromRGB(96, 130, 160),
 		}
 	local function S(L, d, I)
 		local _ = Instance.new(L)
@@ -1503,7 +1352,7 @@ SectionServer.CreateButton({ Title = "Open Gui Server Browser (Low Player and Pi
 			Size = UDim2.new(0, 300, 0, 18),
 			Position = UDim2.new(0, 18, 0, 9),
 			BackgroundTransparency = 1,
-			Text = "SERVER BROWSER",
+			Text = "ArMON HUB · SERVER BROWSER",
 			TextColor3 = Q.TEXT_PRI,
 			Font = Enum.Font.GothamBold,
 			TextSize = 13,
@@ -1530,7 +1379,7 @@ SectionServer.CreateButton({ Title = "Open Gui Server Browser (Low Player and Pi
 		{
 			Size = UDim2.new(0, 28, 0, 28),
 			Position = UDim2.new(1, -42, 0, 12),
-			BackgroundColor3 = Color3.fromRGB(222, 239, 255),
+			BackgroundColor3 = Color3.fromRGB(233, 246, 255),
 			BorderSizePixel = 0,
 			Text = "X",
 			TextColor3 = Q.RED,
@@ -1540,7 +1389,7 @@ SectionServer.CreateButton({ Title = "Open Gui Server Browser (Low Player and Pi
 		f
 	)
 	L(3, N)
-	K(N, Color3.fromRGB(222, 239, 255), Color3.fromRGB(201, 228, 255))
+	K(N, Color3.fromRGB(233, 246, 255), Color3.fromRGB(195, 229, 250))
 	N.MouseButton1Click:Connect(function()
 		o:Destroy()
 	end)
@@ -1549,7 +1398,7 @@ SectionServer.CreateButton({ Title = "Open Gui Server Browser (Low Player and Pi
 		{
 			Size = UDim2.new(1, 0, 0, 42),
 			Position = UDim2.new(0, 0, 0, 52),
-			BackgroundColor3 = Color3.fromRGB(240, 247, 255),
+			BackgroundColor3 = Color3.fromRGB(239, 248, 255),
 			BorderSizePixel = 0,
 		},
 		V
@@ -1585,23 +1434,23 @@ SectionServer.CreateButton({ Title = "Open Gui Server Browser (Low Player and Pi
 			{
 				Size = UDim2.new(0, 82, 0, 26),
 				Position = UDim2.new(1, -270, 0.5, -13),
-				BackgroundColor3 = Color3.fromRGB(226, 241, 255),
+				BackgroundColor3 = Color3.fromRGB(218, 240, 255),
 				BorderSizePixel = 0,
 				Text = "REFRESH",
-				TextColor3 = Color3.fromRGB(36, 113, 197),
+				TextColor3 = Color3.fromRGB(0, 113, 190),
 				Font = Enum.Font.GothamBold,
 				TextSize = 10,
 			},
 			f
 		)
 	L(3, y)
-	K(y, Color3.fromRGB(226, 241, 255), Color3.fromRGB(198, 226, 255))
+	K(y, Color3.fromRGB(218, 240, 255), Color3.fromRGB(192, 229, 251))
 	local x = S(
 		"TextButton",
 		{
 			Size = UDim2.new(0, 82, 0, 26),
 			Position = UDim2.new(1, -182, 0.5, -13),
-			BackgroundColor3 = Color3.fromRGB(226, 241, 255),
+			BackgroundColor3 = Color3.fromRGB(215, 241, 255),
 			BorderSizePixel = 0,
 			Text = "LOAD MORE",
 			TextColor3 = Q.GREEN,
@@ -1611,13 +1460,13 @@ SectionServer.CreateButton({ Title = "Open Gui Server Browser (Low Player and Pi
 		f
 	)
 	L(3, x)
-	K(x, Color3.fromRGB(226, 241, 255), Color3.fromRGB(198, 226, 255))
+	K(x, Color3.fromRGB(215, 241, 255), Color3.fromRGB(184, 225, 249))
 	local k = S(
 		"TextButton",
 		{
 			Size = UDim2.new(0, 82, 0, 26),
 			Position = UDim2.new(1, -94, 0.5, -13),
-			BackgroundColor3 = Color3.fromRGB(226, 241, 255),
+			BackgroundColor3 = Color3.fromRGB(232, 246, 255),
 			BorderSizePixel = 0,
 			Text = "RESET",
 			TextColor3 = Q.RED,
@@ -1627,13 +1476,13 @@ SectionServer.CreateButton({ Title = "Open Gui Server Browser (Low Player and Pi
 		f
 	)
 	L(3, k)
-	K(k, Color3.fromRGB(226, 241, 255), Color3.fromRGB(201, 228, 255))
+	K(k, Color3.fromRGB(232, 246, 255), Color3.fromRGB(195, 229, 250))
 	local P = S(
 		"Frame",
 		{
 			Size = UDim2.new(1, 0, 0, 24),
 			Position = UDim2.new(0, 0, 0, 94),
-			BackgroundColor3 = Color3.fromRGB(240, 247, 255),
+			BackgroundColor3 = Color3.fromRGB(239, 248, 255),
 			BorderSizePixel = 0,
 		},
 		V
@@ -1687,7 +1536,7 @@ SectionServer.CreateButton({ Title = "Open Gui Server Browser (Low Player and Pi
 		{
 			Size = UDim2.new(1, 0, 0, 30),
 			Position = UDim2.new(0, 0, 1, -30),
-			BackgroundColor3 = Color3.fromRGB(240, 247, 255),
+			BackgroundColor3 = Color3.fromRGB(239, 248, 255),
 			BorderSizePixel = 0,
 		},
 		V
@@ -1755,7 +1604,7 @@ SectionServer.CreateButton({ Title = "Open Gui Server Browser (Low Player and Pi
 			{
 				Size = UDim2.new(1, -8, 0, 28),
 				Position = UDim2.new(0, 4, 0, 118),
-				BackgroundColor3 = Color3.fromRGB(225, 241, 255),
+				BackgroundColor3 = Color3.fromRGB(224, 242, 255),
 				BorderSizePixel = 0,
 				ZIndex = 15,
 				Visible = false,
@@ -1795,7 +1644,7 @@ SectionServer.CreateButton({ Title = "Open Gui Server Browser (Low Player and Pi
 		{
 			Size = UDim2.new(0, 360, 0, 36),
 			Position = UDim2.new(0.5, -180, 1, -50),
-			BackgroundColor3 = Color3.fromRGB(223, 240, 255),
+			BackgroundColor3 = Color3.fromRGB(235, 247, 255),
 			BorderSizePixel = 0,
 			ZIndex = 30,
 			Visible = false,
@@ -2007,7 +1856,7 @@ SectionServer.CreateButton({ Title = "Open Gui Server Browser (Low Player and Pi
 				Position = UDim2.new(0, 44, 0, 8),
 				BackgroundTransparency = 1,
 				Text = tostring(c.id):sub(1, 18) .. "...",
-				TextColor3 = Color3.fromRGB(60, 75, 110),
+				TextColor3 = Color3.fromRGB(36, 75, 112),
 				Font = Enum.Font.Code,
 				TextSize = 10,
 				TextXAlignment = Enum.TextXAlignment.Left,
@@ -2049,7 +1898,7 @@ SectionServer.CreateButton({ Title = "Open Gui Server Browser (Low Player and Pi
 			{
 				Size = UDim2.new(0, 50, 0, 2),
 				Position = UDim2.new(0, 210, 0, 28),
-				BackgroundColor3 = Color3.fromRGB(22, 24, 36),
+				BackgroundColor3 = Color3.fromRGB(204, 232, 251),
 				BorderSizePixel = 0,
 			},
 			W
@@ -2083,7 +1932,7 @@ SectionServer.CreateButton({ Title = "Open Gui Server Browser (Low Player and Pi
 			{
 				Size = UDim2.new(0, 72, 0, 28),
 				Position = UDim2.new(1, -82, 0.5, -14),
-				BackgroundColor3 = Color3.fromRGB(10, 30, 18),
+				BackgroundColor3 = Color3.fromRGB(195, 231, 251),
 				BorderSizePixel = 0,
 				Text = "JOIN",
 				TextColor3 = Q.GREEN,
@@ -2093,7 +1942,7 @@ SectionServer.CreateButton({ Title = "Open Gui Server Browser (Low Player and Pi
 			W
 		)
 		L(3, d)
-		K(d, Color3.fromRGB(10, 30, 18), Color3.fromRGB(8, 44, 24))
+		K(d, Color3.fromRGB(195, 231, 251), Color3.fromRGB(166, 216, 246))
 		d.MouseButton1Click:Connect(function()
 			D("TELEPORTING TO " .. tostring(c.id):sub(1, 16) .. "...", Q.CYAN)
 			local K, S = pcall(function()
@@ -2260,7 +2109,7 @@ end)
 StatusPlaceId = SectionServer.CreateLabel({ Title = "PlaceId: " .. game.PlaceId })
 local G = ""
 SectionServer.CreateBox(
-	{ Title = "Input JobId Normal And JobId ArMON HUB", Placeholder = "Type here", Number = false, Default = nil },
+	{ Title = "Input JobId Normal And JobId BananaCat", Placeholder = "Type here", Number = false, Default = nil },
 	function(f)
 		G = f
 	end
@@ -13924,13 +13773,13 @@ local function X(I, _)
 	H.Parent = g
 	H.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	H.BackgroundTransparency = 1
-	H.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	H.BorderColor3 = Color3.fromRGB(115, 202, 250)
 	H.BorderSizePixel = 0
 	H.Position = UDim2.new(0.158661261, 0, 0.82663101, 0)
 	H.Size = UDim2.new(0.0538219661, 0, 0.0765434727, 0)
 	H.Font = Enum.Font.SourceSans
 	H.Text = "\226\134\145"
-	H.TextColor3 = Color3.fromRGB(0, 0, 0)
+	H.TextColor3 = Color3.fromRGB(0, 137, 220)
 	H.TextScaled = true
 	H.TextSize = 14
 	H.TextWrapped = true
@@ -13938,13 +13787,13 @@ local function X(I, _)
 	J.Parent = g
 	J.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	J.BackgroundTransparency = 1
-	J.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	J.BorderColor3 = Color3.fromRGB(115, 202, 250)
 	J.BorderSizePixel = 0
 	J.Position = UDim2.new(0.158661261, 0, 0.922887683, 0)
 	J.Size = UDim2.new(0.0538219661, 0, 0.0765434727, 0)
 	J.Font = Enum.Font.SourceSans
 	J.Text = "\226\134\147"
-	J.TextColor3 = Color3.fromRGB(0, 0, 0)
+	J.TextColor3 = Color3.fromRGB(0, 137, 220)
 	J.TextScaled = true
 	J.TextSize = 14
 	J.TextWrapped = true
@@ -20598,12 +20447,12 @@ SectionWebhook.CreateToggle(
 	end
 )
 local b = {
-	Username = "Binini Hub",
+	Username = "ArMON HUB",
 	AvatarURL = "https://images-ext-1.discordapp.net/external/9LSZu__Uvs7I0N8MWag-JmwF2iT-pHCHSe2UdixGEXQ/%3Fsize%3D4096/https/cdn.discordapp.com/avatars/1262364141968949308/a_0c5fb64e2cbb35d029d73b44576c6a60.gif",
 	BannerURL = "https://cdn.discordapp.com/attachments/1017024488665264218/1262729537578471504/banner_server.jpg",
 	Title = "ArMON HUB Notification",
-	FooterText = "Binini Hub",
-	Color = 16776960,
+	FooterText = "ArMON HUB",
+	Color = 2674687,
 }
 function safe_str(s)
 	local X, g = pcall(function()
@@ -20697,12 +20546,12 @@ end
 function Webhookprofile()
 	local b, s, X, g =
 		{
-			Color = 16776960,
+			Color = 2674687,
 			BannerURL = "https://cdn.discordapp.com/attachments/1017024488665264218/1262729537578471504/banner_server.jpg",
 			AvatarURL = "https://images-ext-1.discordapp.net/external/9LSZu__Uvs7I0N8MWag-JmwF2iT-pHCHSe2UdixGEXQ/%3Fsize%3D4096/https/cdn.discordapp.com/avatars/1262364141968949308/a_0c5fb64e2cbb35d029d73b44576c6a60.gif",
-			Username = "Binini Hub",
-			Title = "<:bananacon:1261744974534541352> ArMON HUB Notification <:bananacon:1261744974534541352>",
-			FooterText = "Binini Hub",
+			Username = "ArMON HUB",
+			Title = "ArMON HUB Notification",
+			FooterText = "ArMON HUB",
 			FruitMinValue = 1000000,
 			ItemMinRarity = 3,
 			MaxFieldLen = 1024,
@@ -21203,20 +21052,11 @@ a.CreateBind({ Title = "Toggle GUI", Key = Enum.KeyCode.LeftControl }, function(
 		getgenv().UIToggled = true
 	end
 	getgenv().UIToggled = not getgenv().UIToggled
-	local roots = { game:GetService("CoreGui") }
-	pcall(function() if gethui then table.insert(roots, gethui()) end end)
-	pcall(function() table.insert(roots, game:GetService("Players").LocalPlayer:FindFirstChildOfClass("PlayerGui")) end)
-	local seen = {}
-	for _, root in ipairs(roots) do
-		if root and not seen[root] then
-			seen[root] = true
-			for _, gui in ipairs(root:GetDescendants()) do
-				if gui:IsA("ScreenGui") and (gui.Name == "Nousigi Hub GUI" or gui.Name == "ArMON HUB") then
-					gui.Enabled = getgenv().UIToggled
-				end
+	if game.CoreGui:FindFirstChild("Nousigi Hub GUI") then
+		for T, T in ipairs(game.CoreGui:GetChildren()) do
+			if T.Name == "Nousigi Hub GUI" then
+				T.Enabled = getgenv().UIToggled
 			end
-			local direct = root:FindFirstChild("Nousigi Hub GUI") or root:FindFirstChild("ArMON HUB")
-			if direct and direct:IsA("ScreenGui") then direct.Enabled = getgenv().UIToggled end
 		end
 	end
 end)
@@ -21387,3 +21227,228 @@ if not getgenv().BananaCatMainLoop then
 	end)
 end
 getgenv().__BF_LOADED = true
+
+-- ================= ArMON HUB | BLUE + WHITE THEME =================
+-- Applies colors to the existing UI library without replacing controls, callbacks, or layouts.
+do
+    local Players = game:GetService("Players")
+    local CoreGui = game:GetService("CoreGui")
+    local Palette = {
+        Accent = Color3.fromRGB(28, 156, 242),
+        AccentDark = Color3.fromRGB(0, 117, 205),
+        AccentSoft = Color3.fromRGB(217, 241, 255),
+        Surface = Color3.fromRGB(255, 255, 255),
+        Panel = Color3.fromRGB(243, 250, 255),
+        Border = Color3.fromRGB(141, 211, 250),
+        Text = Color3.fromRGB(18, 47, 75),
+        Muted = Color3.fromRGB(69, 103, 134),
+        White = Color3.fromRGB(255, 255, 255),
+    }
+    local bound = setmetatable({}, { __mode = "k" })
+    local busy = setmetatable({}, { __mode = "k" })
+
+    local function isHeaderName(name)
+        name = string.lower(name or "")
+        return name:find("header", 1, true) ~= nil
+            or name:find("topbar", 1, true) ~= nil
+            or name:find("titlebar", 1, true) ~= nil
+            or name:find("navbar", 1, true) ~= nil
+    end
+
+    local function colorMetrics(c)
+        local hi = math.max(c.R, c.G, c.B)
+        local lo = math.min(c.R, c.G, c.B)
+        local lum = 0.2126 * c.R + 0.7152 * c.G + 0.0722 * c.B
+        local sat = hi > 0 and (hi - lo) / hi or 0
+        return lum, sat
+    end
+
+    local function mappedBackground(obj)
+        local name = string.lower(obj.Name or "")
+        if isHeaderName(name) then
+            return Palette.Accent
+        end
+        if name:find("sidebar", 1, true) or name:find("navigation", 1, true) then
+            return Palette.AccentSoft
+        end
+        local lum, sat = colorMetrics(obj.BackgroundColor3)
+        if sat > 0.22 then
+            -- Convert previous accent/status colors (including active switches) to the blue palette.
+            return lum < 0.18 and Palette.AccentDark or Palette.Accent
+        end
+        if lum < 0.20 then
+            return Palette.Panel
+        elseif lum < 0.55 then
+            return Palette.AccentSoft
+        elseif lum > 0.91 then
+            return Palette.Surface
+        end
+        return Palette.Panel
+    end
+
+    local function underAccent(node, root)
+        local current = node.Parent
+        while current and current ~= root do
+            -- Only the nearest opaque ancestor background controls text contrast.
+            -- This avoids white text becoming invisible inside a light nested panel.
+            if current:IsA("GuiObject") and current.BackgroundTransparency < 1 then
+                local c = current.BackgroundColor3
+                return (math.abs(c.R - Palette.Accent.R) < 0.015 and math.abs(c.G - Palette.Accent.G) < 0.015 and math.abs(c.B - Palette.Accent.B) < 0.015)
+                    or (math.abs(c.R - Palette.AccentDark.R) < 0.015 and math.abs(c.G - Palette.AccentDark.G) < 0.015 and math.abs(c.B - Palette.AccentDark.B) < 0.015)
+            end
+            current = current.Parent
+        end
+        return false
+    end
+
+    local function setIfDifferent(obj, property, value)
+        local ok, current = pcall(function() return obj[property] end)
+        if ok and current ~= value then
+            pcall(function() obj[property] = value end)
+        end
+    end
+
+    local function themeOne(obj, root)
+        if not obj or not obj.Parent or busy[obj] then
+            return
+        end
+        busy[obj] = true
+        pcall(function()
+            if obj:IsA("TextButton") then
+                local name = string.lower(obj.Name or "")
+                local isCompactSwitch = (name:find("toggle", 1, true) or name:find("switch", 1, true) or name:find("checkbox", 1, true))
+                    and obj.AbsoluteSize.X > 0 and obj.AbsoluteSize.X <= 90 and obj.AbsoluteSize.Y <= 44
+                local buttonBackground = isCompactSwitch and mappedBackground(obj) or Palette.Accent
+                if obj.BackgroundTransparency < 1 then
+                    setIfDifferent(obj, "BackgroundColor3", buttonBackground)
+                end
+                local buttonText = Palette.Text
+                if obj.BackgroundTransparency < 1 and (buttonBackground == Palette.Accent or buttonBackground == Palette.AccentDark) then
+                    buttonText = Palette.White
+                elseif underAccent(obj, root) then
+                    buttonText = Palette.White
+                end
+                setIfDifferent(obj, "TextColor3", buttonText)
+                setIfDifferent(obj, "BorderSizePixel", 0)
+                -- Prevent long mobile button captions from running into adjacent controls.
+                if not obj.TextWrapped and obj.AbsoluteSize.X > 8 and obj.TextBounds.X > obj.AbsoluteSize.X then
+                    pcall(function() obj.TextTruncate = Enum.TextTruncate.AtEnd end)
+                end
+            elseif obj:IsA("ImageButton") then
+                if obj.BackgroundTransparency < 1 then
+                    setIfDifferent(obj, "BackgroundColor3", mappedBackground(obj))
+                end
+                setIfDifferent(obj, "BorderSizePixel", 0)
+            elseif obj:IsA("TextBox") then
+                if obj.BackgroundTransparency < 1 then
+                    setIfDifferent(obj, "BackgroundColor3", Palette.Surface)
+                end
+                setIfDifferent(obj, "TextColor3", Palette.Text)
+                setIfDifferent(obj, "PlaceholderColor3", Palette.Muted)
+                setIfDifferent(obj, "BorderSizePixel", 0)
+            elseif obj:IsA("TextLabel") then
+                setIfDifferent(obj, "TextColor3", underAccent(obj, root) and Palette.White or Palette.Text)
+                -- Keep fixed row sizes intact; truncate only text that would otherwise spill into adjacent controls.
+                if not obj.TextWrapped and obj.AbsoluteSize.X > 8 and obj.TextBounds.X > obj.AbsoluteSize.X then
+                    pcall(function() obj.TextTruncate = Enum.TextTruncate.AtEnd end)
+                end
+            elseif obj:IsA("Frame") or obj:IsA("ScrollingFrame") or obj:IsA("CanvasGroup") then
+                if obj.BackgroundTransparency < 1 then
+                    setIfDifferent(obj, "BackgroundColor3", mappedBackground(obj))
+                end
+                if obj:IsA("ScrollingFrame") then
+                    setIfDifferent(obj, "ScrollBarImageColor3", Palette.Accent)
+                end
+            elseif obj:IsA("UIStroke") then
+                setIfDifferent(obj, "Color", Palette.Border)
+                if obj.Thickness < 1 then
+                    setIfDifferent(obj, "Thickness", 1)
+                end
+            elseif obj:IsA("UIGradient") then
+                setIfDifferent(obj, "Color", ColorSequence.new(Palette.AccentSoft, Palette.Surface))
+            end
+        end)
+        busy[obj] = nil
+    end
+
+    local function bindObject(obj, root)
+        if bound[obj] then
+            themeOne(obj, root)
+            return
+        end
+        bound[obj] = true
+        themeOne(obj, root)
+        if obj:IsA("GuiObject") then
+            obj:GetPropertyChangedSignal("BackgroundColor3"):Connect(function()
+                if not busy[obj] and obj.Parent then
+                    themeOne(obj, root)
+                    for _, child in ipairs(obj:GetDescendants()) do
+                        if child:IsA("TextLabel") then
+                            themeOne(child, root)
+                        end
+                    end
+                end
+            end)
+        end
+        if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
+            obj:GetPropertyChangedSignal("TextColor3"):Connect(function()
+                if not busy[obj] and obj.Parent then
+                    themeOne(obj, root)
+                end
+            end)
+        end
+    end
+
+    local function findMainGui()
+        local ok, found = pcall(function()
+            return CoreGui:FindFirstChild("Nousigi Hub GUI")
+        end)
+        if ok and found and found:IsA("ScreenGui") then
+            return found
+        end
+        pcall(function()
+            if gethui then
+                local ui = gethui()
+                found = ui and ui:FindFirstChild("Nousigi Hub GUI")
+            end
+        end)
+        return found and found:IsA("ScreenGui") and found or nil
+    end
+
+    task.spawn(function()
+        local root
+        for _ = 1, 100 do
+            root = findMainGui()
+            if root then break end
+            task.wait(0.2)
+        end
+        if not root then
+            warn("[ArMON HUB] UI theme could not find the main GUI; built-in Status/Server Browser colors were still updated.")
+            return
+        end
+        for _, obj in ipairs(root:GetDescendants()) do
+            bindObject(obj, root)
+        end
+        root.DescendantAdded:Connect(function(obj)
+            task.defer(function()
+                if obj and obj.Parent and root.Parent then
+                    bindObject(obj, root)
+                    for _, child in ipairs(obj:GetDescendants()) do
+                        bindObject(child, root)
+                    end
+                end
+            end)
+        end)
+        -- Apply once more after layout settles so narrow mobile labels don't spill over adjacent controls.
+        task.delay(0.8, function()
+            if root.Parent then
+                for _, obj in ipairs(root:GetDescendants()) do
+                    if obj:IsA("TextLabel") then
+                        themeOne(obj, root)
+                    end
+                end
+            end
+        end)
+    end)
+end
+-- ================= End ArMON HUB Theme =================
